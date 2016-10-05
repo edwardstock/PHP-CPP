@@ -173,7 +173,7 @@ endif
 #   dependencies that are used by the compiler.
 #
 
-all: COMPILER_FLAGS 	+=	-g ${PHP_COMPILER_FLAGS}
+all: COMPILER_FLAGS 	+=	-g
 all: LINKER_FLAGS		+=  -g
 all: phpcpp
 
@@ -205,10 +205,10 @@ clean:
 	find -name *.o | xargs ${RM}
 
 ${COMMON_SHARED_OBJECTS}:
-	${COMPILER} ${PHP_COMPILER_FLAGS} ${COMPILER_FLAGS} ${SHARED_COMPILER_FLAGS} -o $@ ${@:shared/%.o=%.cpp}
+	${COMPILER} ${COMPILER_FLAGS} ${SHARED_COMPILER_FLAGS} -o $@ ${@:shared/%.o=%.cpp}
 
 ${COMMON_STATIC_OBJECTS}:
-	${COMPILER} ${PHP_COMPILER_FLAGS} ${COMPILER_FLAGS} ${STATIC_COMPILER_FLAGS} -o $@ ${@:static/%.o=%.cpp}
+	${COMPILER} ${COMPILER_FLAGS} ${STATIC_COMPILER_FLAGS} -o $@ ${@:static/%.o=%.cpp}
 
 ${PHP_SHARED_OBJECTS}:
 	${COMPILER} ${PHP_COMPILER_FLAGS} ${SHARED_COMPILER_FLAGS} -o $@ ${@:shared/%.o=%.cpp}
