@@ -173,7 +173,7 @@ endif
 #   dependencies that are used by the compiler.
 #
 
-all: COMPILER_FLAGS 	+=	-g
+all: COMPILER_FLAGS 	+=	-g ${PHP_COMPILER_FLAGS}
 all: LINKER_FLAGS		+=  -g
 all: phpcpp
 
