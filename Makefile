@@ -101,7 +101,7 @@ endif
 #   you want to leave that flag out on production servers).
 #
 
-COMPILER_FLAGS			=	-Wall -c -std=c++11 -fvisibility=hidden -DBUILDING_PHPCPP -Wno-write-strings -stdlib=libc++
+COMPILER_FLAGS			=	-Wall -c -std=c++11 -fvisibility=hidden -DBUILDING_PHPCPP -Wno-write-strings
 SHARED_COMPILER_FLAGS	=	-fpic
 STATIC_COMPILER_FLAGS	=
 PHP_COMPILER_FLAGS		=	${COMPILER_FLAGS} `${PHP_CONFIG} --includes`
@@ -116,8 +116,13 @@ PHP_COMPILER_FLAGS		=	${COMPILER_FLAGS} `${PHP_CONFIG} --includes`
 #   to the linker flags
 #
 
-LINKER_FLAGS			=	-shared -undefined dynamic_lookup
+LINKER_FLAGS			=	-shared
 PHP_LINKER_FLAGS		=	${LINKER_FLAGS} `${PHP_CONFIG} --ldflags`
+
+ifeq ($(shell uname -s),Darwin)
+   	LINKER_FLAGS += -undefined dynamic_lookup
+   	COMPILER_FLAGS += -stdlib=libc++
+endif
 
 
 #
@@ -157,6 +162,11 @@ PHP_SHARED_OBJECTS		=	$(PHP_SOURCES:%.cpp=shared/%.o)
 COMMON_STATIC_OBJECTS	=	$(COMMON_SOURCES:%.cpp=static/%.o)
 PHP_STATIC_OBJECTS		=	$(PHP_SOURCES:%.cpp=static/%.o)
 
+ifeq ($(shell uname -s),Darwin)
+	SO_LINK_ARGS = ""
+else
+	SO_LINK_ARGS = -Wl,-soname,libphpcpp.so.$(SONAME)
+endif
 
 #
 #   End of the variables section. Here starts the list of instructions and
@@ -176,7 +186,7 @@ phpcpp: ${PHP_SHARED_LIBRARY} ${PHP_STATIC_LIBRARY}
 	@echo "Build complete."
 
 ${PHP_SHARED_LIBRARY}: shared_directories ${COMMON_SHARED_OBJECTS} ${PHP_SHARED_OBJECTS}
-	${LINKER} ${PHP_LINKER_FLAGS} -o $@ ${COMMON_SHARED_OBJECTS} ${PHP_SHARED_OBJECTS}
+	${LINKER} ${PHP_LINKER_FLAGS} ${SO_LINK_ARGS} -o $@ ${COMMON_SHARED_OBJECTS} ${PHP_SHARED_OBJECTS}
 
 ${PHP_STATIC_LIBRARY}: static_directories ${COMMON_STATIC_OBJECTS} ${PHP_STATIC_OBJECTS}
 	${ARCHIVER} $@ ${COMMON_STATIC_OBJECTS} ${PHP_STATIC_OBJECTS}
