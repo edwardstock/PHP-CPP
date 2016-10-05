@@ -13,6 +13,16 @@
  *  @copyright 2014 Copernica BV
  */
 
+#if HAS_CXX11_THREAD_LOCAL
+#define ATTRIBUTE_TLS thread_local
+#elif defined (__GNUC__)
+#define ATTRIBUTE_TLS
+#elif defined (_MSC_VER)
+#define ATTRIBUTE_TLS __declspec(thread)
+#else // !C++11 && !__GNUC__ && !_MSC_VER
+#error "Define a thread local storage qualifier for your compiler/platform!"
+#endif
+
 /**
  *  Set up namespace
  */
@@ -21,11 +31,11 @@ namespace Php {
 /**
  *  Define the out and err objects
  */
-extern thread_local PHPCPP_EXPORT std::ostream out;
-extern thread_local PHPCPP_EXPORT std::ostream error;
-extern thread_local PHPCPP_EXPORT std::ostream notice;
-extern thread_local PHPCPP_EXPORT std::ostream warning;
-extern thread_local PHPCPP_EXPORT std::ostream deprecated;
+extern PHPCPP_EXPORT std::ostream out;
+extern PHPCPP_EXPORT std::ostream error;
+extern PHPCPP_EXPORT std::ostream notice;
+extern PHPCPP_EXPORT std::ostream warning;
+extern PHPCPP_EXPORT std::ostream deprecated;
 
 /**
  *  End namespace

@@ -101,7 +101,7 @@ endif
 #   you want to leave that flag out on production servers).
 #
 
-COMPILER_FLAGS			=	-Wall -c -std=c++11 -fvisibility=hidden -DBUILDING_PHPCPP -Wno-write-strings
+COMPILER_FLAGS			=	-Wall -c -std=c++11 -fvisibility=hidden -DBUILDING_PHPCPP -Wno-write-strings -stdlib=libc++
 SHARED_COMPILER_FLAGS	=	-fpic
 STATIC_COMPILER_FLAGS	=
 PHP_COMPILER_FLAGS		=	${COMPILER_FLAGS} `${PHP_CONFIG} --includes`
@@ -116,7 +116,7 @@ PHP_COMPILER_FLAGS		=	${COMPILER_FLAGS} `${PHP_CONFIG} --includes`
 #   to the linker flags
 #
 
-LINKER_FLAGS			=	-shared
+LINKER_FLAGS			=	-shared -undefined dynamic_lookup
 PHP_LINKER_FLAGS		=	${LINKER_FLAGS} `${PHP_CONFIG} --ldflags`
 
 
@@ -176,7 +176,7 @@ phpcpp: ${PHP_SHARED_LIBRARY} ${PHP_STATIC_LIBRARY}
 	@echo "Build complete."
 
 ${PHP_SHARED_LIBRARY}: shared_directories ${COMMON_SHARED_OBJECTS} ${PHP_SHARED_OBJECTS}
-	${LINKER} ${PHP_LINKER_FLAGS} -Wl,-soname,libphpcpp.so.$(SONAME) -o $@ ${COMMON_SHARED_OBJECTS} ${PHP_SHARED_OBJECTS}
+	${LINKER} ${PHP_LINKER_FLAGS} -o $@ ${COMMON_SHARED_OBJECTS} ${PHP_SHARED_OBJECTS}
 
 ${PHP_STATIC_LIBRARY}: static_directories ${COMMON_STATIC_OBJECTS} ${PHP_STATIC_OBJECTS}
 	${ARCHIVER} $@ ${COMMON_STATIC_OBJECTS} ${PHP_STATIC_OBJECTS}

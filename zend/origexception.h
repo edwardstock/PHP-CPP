@@ -7,7 +7,8 @@
  *  @author Emiel Bruijntjes <emiel.bruijntjes@copernica.com>
  *  @copyright 2013 Copernica BV
  */
-
+#include <TSRM.h>
+#include "exception.h"
 /**
  *  Set up namespace
  */
