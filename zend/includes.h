@@ -12,16 +12,6 @@
  */
 #pragma once
 
-#if HAS_CXX11_THREAD_LOCAL
-#define ATTRIBUTE_TLS thread_local
-#elif defined (__GNUC__)
-#define ATTRIBUTE_TLS
-#elif defined (_MSC_VER)
-#define ATTRIBUTE_TLS __declspec(thread)
-#else // !C++11 && !__GNUC__ && !_MSC_VER
-#error "Define a thread local storage qualifier for your compiler/platform!"
-#endif
-
 /**
  *  Include standard C and C++ libraries
  */
@@ -55,6 +45,10 @@
 #include <zend_closures.h>
 #include <SAPI.h>
 
+#ifdef ZTS
+#include <TSRM.h>
+#endif
+
 /**
  *  We don't work with older versions of PHP
  */
@@ -73,6 +67,7 @@
 #include "../include/visibility.h"
 #include "../include/deprecated.h"
 #include "../include/noexcept.h"
+#include "../include/tsrm.h"
 #include "../include/thread_local.h"
 #include "../include/platform.h"
 #include "../include/version.h"

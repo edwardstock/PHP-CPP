@@ -38,10 +38,10 @@ Value constant(const char *name)
 Value constant(const char *constant, size_t size)
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // retrieve the constant
-    auto *result = zend_get_constant(String{ constant, size } TSRMLS_CC);
+    auto *result = zend_get_constant(String{ constant, size });
 
     // did the constant exist?
     if (!result) return nullptr;
@@ -71,7 +71,7 @@ Value constant(const std::string &name)
 bool define(const char *name, size_t size, const Value &value)
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // the constant structure from the zend engine
     zend_constant constant;
@@ -104,7 +104,7 @@ bool define(const char *name, size_t size, const Value &value)
     constant.module_number = PHP_USER_CONSTANT;
 
     // register the constant
-    return zend_register_constant(&constant TSRMLS_CC) == SUCCESS;
+    return zend_register_constant(&constant) == SUCCESS;
 }
 
 /**
@@ -140,10 +140,10 @@ bool define(const std::string &name, const Value &value)
 bool defined(const char *name, size_t size)
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // retrieve the constant
-    auto *value = zend_get_constant_ex(String{ name, size }, nullptr, ZEND_FETCH_CLASS_SILENT TSRMLS_CC);
+    auto *value = zend_get_constant_ex(String{ name, size }, nullptr, ZEND_FETCH_CLASS_SILENT);
 
     // check if the value was found
     if (!value) return false;

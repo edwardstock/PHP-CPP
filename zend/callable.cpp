@@ -36,8 +36,8 @@ static std::map<std::string, Callable*> callables;
 void Callable::invoke(INTERNAL_FUNCTION_PARAMETERS)
 {
     // find the function name
-    const char *name = get_active_function_name(TSRMLS_C);
-    const char *classname = get_active_class_name(nullptr TSRMLS_C);
+    const char *name = get_active_function_name();
+    const char *classname = get_active_class_name(nullptr);
 
     // the callable we are retrieving
     Callable *callable = nullptr;
@@ -70,7 +70,7 @@ void Callable::invoke(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         // construct parameters
-        ParametersImpl params(getThis(), ZEND_NUM_ARGS() TSRMLS_CC);
+        ParametersImpl params(getThis(), ZEND_NUM_ARGS());
 
         // the function could throw an exception
         try
@@ -84,7 +84,7 @@ void Callable::invoke(INTERNAL_FUNCTION_PARAMETERS)
         catch (Exception &exception)
         {
             // process the exception
-            process(exception TSRMLS_CC);
+            process(exception);
         }
     }
 }

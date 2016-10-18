@@ -26,7 +26,7 @@ public:
      *  @param  begin
      *  @param  tsrm_ls
      */
-    TraverseIterator(zval *object, bool begin TSRMLS_DC) : _object(object)
+    TraverseIterator(zval *object, bool begin) : _object(object)
     {
         // leap out if this iterator starts at the end
         if (!begin) return;
@@ -35,13 +35,13 @@ public:
         auto *entry = Z_OBJCE_P(object);
 
         // create the iterator
-        _iter = entry->get_iterator(entry, object, false TSRMLS_CC);
+        _iter = entry->get_iterator(entry, object, false);
 
         // rewind the iterator
-        _iter->funcs->rewind(_iter TSRMLS_CC);
+        _iter->funcs->rewind(_iter);
 
         // read the first key/value pair
-        read(TSRMLS_C);
+        read();
     }
 
     /**
@@ -49,7 +49,7 @@ public:
      *  @param  that
      *  @param  tsrm_ls
      */
-    TraverseIterator(const TraverseIterator &that TSRMLS_DC) : TraverseIterator(that._object, that._iter != nullptr TSRMLS_CC)
+    TraverseIterator(const TraverseIterator &that) : TraverseIterator(that._object, that._iter != nullptr)
     {
         // @todo    this is a broken implementation, the copy is at the start
         //          position, while we'd like to be at the same position
@@ -64,10 +64,10 @@ public:
         if (!_iter) return;
 
         // we need the tsrm pointer
-        TSRMLS_FETCH();
+        PHPCPP_TSRMLS_FETCH();
 
         // call the iterator destructor
-        if (_iter) _iter->funcs->dtor(_iter TSRMLS_CC);
+        if (_iter) _iter->funcs->dtor(_iter);
     }
 
     /**
@@ -78,10 +78,10 @@ public:
     virtual ValueIteratorImpl *clone() override
     {
         // we need the tsrm_ls variable
-        TSRMLS_FETCH();
+        PHPCPP_TSRMLS_FETCH();
 
         // construct iterator
-        return new TraverseIterator(*this TSRMLS_CC);
+        return new TraverseIterator(*this);
     }
 
     /**
@@ -95,13 +95,13 @@ public:
         if (!_iter) return false;
 
         // we need the tsrm_ls variable
-        TSRMLS_FETCH();
+        PHPCPP_TSRMLS_FETCH();
 
         // movw it forward
-        _iter->funcs->move_forward(_iter TSRMLS_CC);
+        _iter->funcs->move_forward(_iter);
 
         // and read current data
-        read(TSRMLS_C);
+        read();
 
         // done
         return true;
@@ -175,19 +175,19 @@ private:
      *  @param  tsrm_ls
      *  @return bool
      */
-    bool read(TSRMLS_D)
+    bool read()
     {
         // not possible when no iterator exists
         if (!_iter) return false;
 
         // is the iterator at a valid position?
-        if (_iter->funcs->valid(_iter TSRMLS_CC) == FAILURE) return invalidate(TSRMLS_C);
+        if (_iter->funcs->valid(_iter) == FAILURE) return invalidate();
 
         // create a value object
         Value val;
 
         // call the function to get the key
-        _iter->funcs->get_current_key(_iter, val._val TSRMLS_CC);
+        _iter->funcs->get_current_key(_iter, val._val);
 
         // store the key
         _data.first = val;
@@ -207,13 +207,13 @@ private:
      *  @param  tsrm_ls
      *  @return bool
      */
-    bool invalidate(TSRMLS_D)
+    bool invalidate()
     {
         // skip if already invalid
         if (!_iter) return false;
 
         // reset the iterator
-        _iter->funcs->dtor(_iter TSRMLS_CC);
+        _iter->funcs->dtor(_iter);
 
         // set back to null
         _iter = nullptr;

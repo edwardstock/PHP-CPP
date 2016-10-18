@@ -739,7 +739,7 @@ static Value do_exec(const zval *object, zval *method, int argc, zval *argv)
     zval retval;
 
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // the current exception
     zend_object *oldException = EG(exception);
@@ -747,7 +747,7 @@ static Value do_exec(const zval *object, zval *method, int argc, zval *argv)
     // call the function
     // we're casting the const away here, object is only const so we can call this method
     // from const methods after all..
-    if (call_user_function_ex(CG(function_table), (zval*) object, method, &retval, argc, argv, 1, nullptr TSRMLS_CC) != SUCCESS)
+    if (call_user_function_ex(CG(function_table), (zval*) object, method, &retval, argc, argv, 1, nullptr) != SUCCESS)
     {
         // throw an exception, the function does not exist
         throw Exception("Invalid call to "+Value(method).stringValue());
@@ -759,7 +759,7 @@ static Value do_exec(const zval *object, zval *method, int argc, zval *argv)
     {
         // was an exception thrown inside the function? In that case we throw a C++ new exception
         // to give the C++ code the chance to catch it
-        if (oldException != EG(exception) && EG(exception)) throw OrigException(EG(exception) TSRMLS_CC);
+        if (oldException != EG(exception) && EG(exception)) throw OrigException(EG(exception));
 
         // leap out if nothing was returned
         if (Z_ISUNDEF(retval)) return nullptr;
@@ -932,13 +932,13 @@ Value Value::exec(const char *name, int argc, Value *argv)
 bool Value::operator==(const Value &value) const
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // zval that will hold the result of the comparison
     zval result;
 
     // run the comparison
-    if (SUCCESS != compare_function(&result, _val, value._val TSRMLS_CC)) return false;
+    if (SUCCESS != compare_function(&result, _val, value._val)) return false;
 
     // convert to boolean
     return result.value.lval == 0;
@@ -952,13 +952,13 @@ bool Value::operator==(const Value &value) const
 bool Value::operator<(const Value &value) const
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // zval that will hold the result of the comparison
     zval result;
 
     // run the comparison
-    if (SUCCESS != compare_function(&result, _val, value._val TSRMLS_CC)) return false;
+    if (SUCCESS != compare_function(&result, _val, value._val)) return false;
 
     // convert to boolean
     return result.value.lval < 0;
@@ -1114,10 +1114,10 @@ Value &Value::setType(Type type) &
 bool Value::isCallable() const
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // we can not rely on the type, because strings can be callable as well
-    return zend_is_callable(_val, 0, NULL TSRMLS_CC);
+    return zend_is_callable(_val, 0, NULL);
 }
 
 /**
@@ -1128,7 +1128,7 @@ bool Value::isCallable() const
 zend_class_entry *Value::classEntry(bool allowString) const
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // is this an object
     if (isObject())
@@ -1142,7 +1142,7 @@ zend_class_entry *Value::classEntry(bool allowString) const
         if (!allowString || !isString()) return nullptr;
 
         // find the class entry
-        return zend_lookup_class(Z_STR_P(_val) TSRMLS_CC);
+        return zend_lookup_class(Z_STR_P(_val));
     }
 }
 
@@ -1160,20 +1160,20 @@ zend_class_entry *Value::classEntry(bool allowString) const
 bool Value::instanceOf(const char *classname, size_t size, bool allowString) const
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // the class-entry of 'this'
     zend_class_entry *this_ce = classEntry(allowString);
     if (!this_ce) return false;
 
     // now we can look up the actual class
-    auto *ce = zend_lookup_class_ex(String(classname, size), nullptr, 0 TSRMLS_CC);
+    auto *ce = zend_lookup_class_ex(String(classname, size), nullptr, 0);
 
     // no such class, then we are not instanceof
     if (!ce) return false;
 
     // check if this is a subclass
-    return instanceof_function(this_ce, ce TSRMLS_CC);
+    return instanceof_function(this_ce, ce);
 }
 
 /**
@@ -1190,14 +1190,14 @@ bool Value::instanceOf(const char *classname, size_t size, bool allowString) con
 bool Value::derivedFrom(const char *classname, size_t size, bool allowString) const
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // the class-entry of 'this'
     zend_class_entry *this_ce = classEntry(allowString);
     if (!this_ce) return false;
 
     // now we can look up the actual class
-    auto *ce = zend_lookup_class_ex(String(classname, size), nullptr, 0 TSRMLS_CC);
+    auto *ce = zend_lookup_class_ex(String(classname, size), nullptr, 0);
 
     // unable to find the class entry?
     if (!ce) return false;
@@ -1206,7 +1206,7 @@ bool Value::derivedFrom(const char *classname, size_t size, bool allowString) co
     if (this_ce == ce) return false;
 
     // check if this is a subclass
-    return instanceof_function(this_ce, ce TSRMLS_CC);
+    return instanceof_function(this_ce, ce);
 }
 
 /**
@@ -1362,10 +1362,10 @@ int Value::size() const
         zend_long result;
 
         // we need the tsrm_ls variable
-        TSRMLS_FETCH();
+        PHPCPP_TSRMLS_FETCH();
 
         // call the function
-        return Z_OBJ_HT_P(_val)->count_elements(_val, &result TSRMLS_CC) == SUCCESS ? result : 0;
+        return Z_OBJ_HT_P(_val)->count_elements(_val, &result) == SUCCESS ? result : 0;
     }
 
     // not an array, return string size if this is a string
@@ -1418,8 +1418,8 @@ ValueIterator Value::createIterator(bool begin) const
     // get access to the hash table
     if (isObject())
     {
-        // we need the TSRMLS_CC variable
-        TSRMLS_FETCH();
+        // we need the variable
+        PHPCPP_TSRMLS_FETCH();
 
         // is a special iterator method defined in the class entry?
         auto *entry = Z_OBJCE_P(_val);
@@ -1429,7 +1429,7 @@ ValueIterator Value::createIterator(bool begin) const
         {
             // the object implements Traversable interface, we have to use a
             // special iterator to user that interface too
-            return ValueIterator(new TraverseIterator(_val, begin TSRMLS_CC));
+            return ValueIterator(new TraverseIterator(_val, begin));
         }
         else
         {
@@ -1512,12 +1512,12 @@ bool Value::contains(const char *key, int size) const
     }
     else if (isObject())
     {
-        // we need the tsrmls_cc variable
-        TSRMLS_FETCH();
+        // we need the variable
+        PHPCPP_TSRMLS_FETCH();
 
         // retrieve the object pointer and check whether the property we are trying to retrieve
         // is marked as private/protected (cast necessary for php 5.3)
-        if (zend_check_property_access(Z_OBJ_P(_val), String(key, size) TSRMLS_CC) == FAILURE) return false;
+        if (zend_check_property_access(Z_OBJ_P(_val), String(key, size)) == FAILURE) return false;
 
         // check if the 'has_property' method is available for this object
         auto *has_property = Z_OBJ_HT_P(_val)->has_property;
@@ -1530,7 +1530,7 @@ bool Value::contains(const char *key, int size) const
 
         // call the has_property() method (0 means: check whether property exists and is not NULL,
         // this is not really what we want, but the closest to the possible values of that parameter)
-        return has_property(_val, property._val, 0, nullptr TSRMLS_CC);
+        return has_property(_val, property._val, 0, nullptr);
     }
     else
     {
@@ -1593,13 +1593,13 @@ Value Value::get(const char *key, int size) const
         if (size > 0 && key[0] == 0) return Value();
 
         // we need the tsrm_ls variable
-        TSRMLS_FETCH();
+        PHPCPP_TSRMLS_FETCH();
 
         // temporary value for holding any error
         zval rv;
 
         // read the property
-        zval *property = zend_read_property(nullptr, _val, key, size, 0, &rv TSRMLS_CC);
+        zval *property = zend_read_property(nullptr, _val, key, size, 0, &rv);
 
         // wrap in value
         return Value(property);
@@ -1668,10 +1668,10 @@ void Value::setRaw(const char *key, int size, const Value &value)
         SEPARATE_ZVAL_IF_NOT_REF(_val);
 
         // we need the tsrm_ls variable
-        TSRMLS_FETCH();
+        PHPCPP_TSRMLS_FETCH();
 
         // update the property
-        zend_update_property(nullptr, _val, key, size, value._val TSRMLS_CC);
+        zend_update_property(nullptr, _val, key, size, value._val);
     }
     else
     {
@@ -1742,10 +1742,10 @@ void Value::unset(const char *key, int size)
         SEPARATE_ZVAL_IF_NOT_REF(_val);
 
         // we need the tsrm_ls variable
-        TSRMLS_FETCH();
+        PHPCPP_TSRMLS_FETCH();
 
         // in the zend header files, unsetting properties is redirected to setting it to null...
-        add_property_null_ex(_val, key, size TSRMLS_CC);
+        add_property_null_ex(_val, key, size);
     }
     else if (isArray())
     {
@@ -1814,10 +1814,10 @@ Base *Value::implementation() const
     if (!isObject()) return nullptr;
 
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // retrieve the mixed object that contains the base
-    return ObjectImpl::find(_val TSRMLS_CC)->object();
+    return ObjectImpl::find(_val)->object();
 }
 
 /**

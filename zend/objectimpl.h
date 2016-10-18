@@ -59,7 +59,7 @@ public:
      *  @param  refcount    The initial refcount for the object
      *  @param  tsrm_ls     Optional threading data
      */
-    ObjectImpl(zend_class_entry *entry, Base *base, zend_object_handlers *handlers, int refcount TSRMLS_DC) :
+    ObjectImpl(zend_class_entry *entry, Base *base, zend_object_handlers *handlers, int refcount) :
         _object(base)
     {
         // allocate a mixed object (for some reason this does not have to be deallocated)
@@ -70,7 +70,7 @@ public:
         _mixed->self = this;
 
         // initialize the object and its properties
-        zend_object_std_init  (&_mixed->php, entry TSRMLS_CC);
+        zend_object_std_init  (&_mixed->php, entry);
         object_properties_init(&_mixed->php, entry);
 
         // install the handlers
@@ -92,7 +92,7 @@ public:
      *  Destruct the object
      *  @param  tsrm_ls
      */
-    void destruct(TSRMLS_D)
+    void destruct()
     {
         // destruct the object
         delete this;
@@ -117,7 +117,7 @@ public:
      *  @param  tsrm_ls     Optional pointer to thread info
      *  @return ObjectImpl
      */
-    static ObjectImpl *find(zval *val TSRMLS_DC)
+    static ObjectImpl *find(zval *val)
     {
         // retrieve the zend_object from the zval and use it to find the ObjectImpl
         return find(Z_OBJ_P(val));

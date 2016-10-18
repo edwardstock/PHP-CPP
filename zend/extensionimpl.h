@@ -108,7 +108,7 @@ private:
      *  @param  tsrm_ls
      *  @return bool
      */
-    bool initialize(int module_number TSRMLS_DC);
+    bool initialize(int module_number);
 
     /**
      *  Shutdown the extension
@@ -116,7 +116,7 @@ private:
      *  @param  tsrm_ls
      *  @return bool
      */
-    bool shutdown(int module_number TSRMLS_DC);
+    bool shutdown(int module_number);
 
     /**
      *  Function that is called when the extension initializes
@@ -125,7 +125,7 @@ private:
      *  @param  tsrm_ls
      *  @return int         0 on success
      */
-    static int processStartup(int type, int module_number TSRMLS_DC);
+    static int processStartup(int type, int module_number);
 
     /**
      *  Function that is called when the extension is about to be stopped
@@ -134,7 +134,7 @@ private:
      *  @param  tsrm_ls
      *  @return int
      */
-    static int processShutdown(int type, int module_number TSRMLS_DC);
+    static int processShutdown(int type, int module_number);
 
     /**
      *  Function that is called when a request starts
@@ -143,7 +143,7 @@ private:
      *  @param  tsrm_ls
      *  @return int         0 on success
      */
-    static int processRequest(int type, int module_number TSRMLS_DC);
+    static int processRequest(int type, int module_number);
 
     /**
      *  Function that is called when a request is ended
@@ -152,7 +152,7 @@ private:
      *  @param  tsrm_ls
      *  @return int         0 on success
      */
-    static int processIdle(int type, int module_number TSRMLS_DC);
+    static int processIdle(int type, int module_number);
 
     /**
      *  Function that is called when the PHP engine initializes with a different PHP-CPP
@@ -162,7 +162,7 @@ private:
      *  @param  tsrm_ls
      *  @return int         0 on success
      */
-    static int processMismatch(int type, int module_number TSRMLS_DC);
+    static int processMismatch(int type, int module_number);
 };
 
 /**

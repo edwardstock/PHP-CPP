@@ -23,7 +23,7 @@ namespace Php {
 Value set_exception_handler(const std::function<Value(Parameters &params)> &handler)
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // create a functor which wraps our callback
     Function functor(handler);
@@ -50,7 +50,7 @@ Value set_exception_handler(const std::function<Value(Parameters &params)> &hand
 Value set_error_handler(const std::function<Value(Parameters &params)> &handler, Error error)
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // create the functor which wraps our callback
     Function functor(handler);
@@ -78,7 +78,7 @@ Value set_error_handler(const std::function<Value(Parameters &params)> &handler,
 Value error_reporting(Error error)
 {
     // we need the tsrm_ls variable
-    TSRMLS_FETCH();
+    PHPCPP_TSRMLS_FETCH();
 
     // store the old error reporting value
     Value output(EG(error_reporting));

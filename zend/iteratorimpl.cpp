@@ -56,7 +56,7 @@ IteratorImpl *IteratorImpl::self(zend_object_iterator *iter)
  *  @param  iter
  *  @param  tsrm_ls
  */
-void IteratorImpl::destructor(zend_object_iterator *iter TSRMLS_DC)
+void IteratorImpl::destructor(zend_object_iterator *iter)
 {
     // we are not going to deallocate the memory, because the php engine
     // seems to do that automagically nowadays, we just call the destructor explicitly
@@ -70,7 +70,7 @@ void IteratorImpl::destructor(zend_object_iterator *iter TSRMLS_DC)
  *  @param  tsrm_ls
  *  @return int
  */
-int IteratorImpl::valid(zend_object_iterator *iter TSRMLS_DC)
+int IteratorImpl::valid(zend_object_iterator *iter)
 {
     // check if valid
     return self(iter)->valid() ? SUCCESS : FAILURE;
@@ -83,7 +83,7 @@ int IteratorImpl::valid(zend_object_iterator *iter TSRMLS_DC)
  *  @param  tsrm_ls Thread safety variable
  *  @return The current value of the iterator
  */
-zval *IteratorImpl::current(zend_object_iterator *iter TSRMLS_DC)
+zval *IteratorImpl::current(zend_object_iterator *iter)
 {
     // get the actual iterator
     auto *iterator = self(iter);
@@ -105,7 +105,7 @@ zval *IteratorImpl::current(zend_object_iterator *iter TSRMLS_DC)
  *  @param  key
  *  @param  tsrm_ls
  */
-void IteratorImpl::key(zend_object_iterator *iter, zval *key TSRMLS_DC)
+void IteratorImpl::key(zend_object_iterator *iter, zval *key)
 {
     // retrieve the key
     Value retval(self(iter)->key());
@@ -122,7 +122,7 @@ void IteratorImpl::key(zend_object_iterator *iter, zval *key TSRMLS_DC)
  *  @param  iter
  *  @param  tsrm_ls
  */
-void IteratorImpl::next(zend_object_iterator *iter TSRMLS_DC)
+void IteratorImpl::next(zend_object_iterator *iter)
 {
     // call the next method
     self(iter)->next();
@@ -133,7 +133,7 @@ void IteratorImpl::next(zend_object_iterator *iter TSRMLS_DC)
  *  @param  iter
  *  @param  tsrm_ls
  */
-void IteratorImpl::rewind(zend_object_iterator *iter TSRMLS_DC)
+void IteratorImpl::rewind(zend_object_iterator *iter)
 {
     // call the rewind method
     self(iter)->rewind();
@@ -144,7 +144,7 @@ void IteratorImpl::rewind(zend_object_iterator *iter TSRMLS_DC)
  *  @param  iter
  *  @param  tsrm_ls
  */
-void IteratorImpl::invalidate(zend_object_iterator *iter TSRMLS_DC)
+void IteratorImpl::invalidate(zend_object_iterator *iter)
 {
     // call the rewind method
     self(iter)->invalidate();

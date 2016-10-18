@@ -35,10 +35,10 @@ public:
      *  @param  zend_class_entry
      *  @param  tsrm_ls
      */
-    void initialize(struct _zend_class_entry *entry TSRMLS_DC)
+    void initialize(struct _zend_class_entry *entry)
     {
-        if (_flags == Const) constant(entry TSRMLS_CC);
-        else declare(entry TSRMLS_CC);
+        if (_flags == Const) constant(entry);
+        else declare(entry);
     }
 
 protected:
@@ -47,14 +47,14 @@ protected:
      *  @param  zend_class_entry
      *  @param  tsrm_ls
      */
-    virtual void constant(struct _zend_class_entry *entry TSRMLS_DC) = 0;
+    virtual void constant(struct _zend_class_entry *entry) = 0;
     
     /**
      *  Internal method to declare the property
      *  @param  zend_class_entry
      *  @param  tsrm_ls
      */
-    virtual void declare(struct _zend_class_entry *entry TSRMLS_DC) = 0;
+    virtual void declare(struct _zend_class_entry *entry) = 0;
 
 protected:
     /**

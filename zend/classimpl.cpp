@@ -110,7 +110,7 @@ void ClassImpl::callMethod(INTERNAL_FUNCTION_PARAMETERS)
         Value result(return_value, true);
 
         // construct parameters
-        ParametersImpl params(getThis(), ZEND_NUM_ARGS() TSRMLS_CC);
+        ParametersImpl params(getThis(), ZEND_NUM_ARGS());
 
         // retrieve the base object
         Base *base = params.object();
@@ -127,7 +127,7 @@ void ClassImpl::callMethod(INTERNAL_FUNCTION_PARAMETERS)
     catch (Exception &exception)
     {
         // process the exception
-        process(exception TSRMLS_CC);
+        process(exception);
     }
 }
 
@@ -155,7 +155,7 @@ void ClassImpl::callInvoke(INTERNAL_FUNCTION_PARAMETERS)
         Value result(return_value, true);
 
         // construct parameters
-        ParametersImpl params(getThis(), ZEND_NUM_ARGS() TSRMLS_CC);
+        ParametersImpl params(getThis(), ZEND_NUM_ARGS());
 
         // retrieve the base object
         Base *base = params.object();
@@ -171,7 +171,7 @@ void ClassImpl::callInvoke(INTERNAL_FUNCTION_PARAMETERS)
     catch (Exception &exception)
     {
         // process the exception
-        process(exception TSRMLS_CC);
+        process(exception);
     }
 }
 
@@ -184,7 +184,7 @@ void ClassImpl::callInvoke(INTERNAL_FUNCTION_PARAMETERS)
  *  @param  tsrm_ls
  *  @return zend_function
  */
-zend_function *ClassImpl::getMethod(zend_object **object, zend_string *method, const zval *key TSRMLS_DC)
+zend_function *ClassImpl::getMethod(zend_object **object, zend_string *method, const zval *key)
 {
     // something strange about the Zend engine (once more). The structure with
     // object-handlers has a get_method and call_method member. When a function is
@@ -195,7 +195,7 @@ zend_function *ClassImpl::getMethod(zend_object **object, zend_string *method, c
 
     // first we'll check if the default handler does not have an implementation,
     // in that case the method is probably already implemented as a regular method
-    auto *defaultFunction = std_object_handlers.get_method(object, method, key TSRMLS_CC);
+    auto *defaultFunction = std_object_handlers.get_method(object, method, key);
 
     // did the default implementation do anything?
     if (defaultFunction) return defaultFunction;
@@ -240,11 +240,11 @@ zend_function *ClassImpl::getMethod(zend_object **object, zend_string *method, c
  *  @param  tsrm_ls
  *  @return zend_function
  */
-zend_function *ClassImpl::getStaticMethod(zend_class_entry *entry, zend_string *method TSRMLS_DC)
+zend_function *ClassImpl::getStaticMethod(zend_class_entry *entry, zend_string *method)
 {
     // first we'll check if the default handler does not have an implementation,
     // in that case the method is probably already implemented as a regular method
-    auto *defaultFunction = zend_std_get_static_method(entry, method, nullptr TSRMLS_CC);
+    auto *defaultFunction = zend_std_get_static_method(entry, method, nullptr);
 
     // did the default implementation do anything?
     if (defaultFunction) return defaultFunction;
@@ -282,7 +282,7 @@ zend_function *ClassImpl::getStaticMethod(zend_class_entry *entry, zend_string *
  *  @param  tsrm_ls
  *  @return int
  */
-int ClassImpl::getClosure(zval *object, zend_class_entry **entry_ptr, zend_function **func, zend_object **object_ptr TSRMLS_DC)
+int ClassImpl::getClosure(zval *object, zend_class_entry **entry_ptr, zend_function **func, zend_object **object_ptr)
 {
     // it is really unbelievable how the Zend engine manages to implement every feature
     // in a complete different manner. You would expect the __invoke() and the
@@ -397,7 +397,7 @@ zend_object_handlers *ClassImpl::objectHandlers(zend_class_entry *entry)
  *  @param  tsrm_ls
  *  @return int
  */
-int ClassImpl::compare(zval *val1, zval *val2 TSRMLS_DC)
+int ClassImpl::compare(zval *val1, zval *val2)
 {
     // prevent exceptions
     try
@@ -412,8 +412,8 @@ int ClassImpl::compare(zval *val1, zval *val2 TSRMLS_DC)
         ClassBase *meta = self(entry)->_base;
 
         // get the base objects
-        Base *object1 = ObjectImpl::find(val1 TSRMLS_CC)->object();
-        Base *object2 = ObjectImpl::find(val2 TSRMLS_CC)->object();
+        Base *object1 = ObjectImpl::find(val1)->object();
+        Base *object2 = ObjectImpl::find(val2)->object();
 
         // run the compare method
         return meta->callCompare(object1, object2);
@@ -424,13 +424,13 @@ int ClassImpl::compare(zval *val1, zval *val2 TSRMLS_DC)
         if (!std_object_handlers.compare_objects) return 1;
 
         // call default
-        return std_object_handlers.compare_objects(val1, val2 TSRMLS_CC);
+        return std_object_handlers.compare_objects(val1, val2);
     }
     catch (Exception &exception)
     {
         // a Php::Exception was thrown by the extension __compare function,
         // pass this on to user space
-        process(exception TSRMLS_CC);
+        process(exception);
 
         // what shall we return here...
         return 1;
@@ -445,10 +445,10 @@ int ClassImpl::compare(zval *val1, zval *val2 TSRMLS_DC)
  *  @param  tsrm_ls
  *  @return int
  */
-int ClassImpl::cast(zval *val, zval *retval, int type TSRMLS_DC)
+int ClassImpl::cast(zval *val, zval *retval, int type)
 {
     // get the base c++ object
-    Base *object = ObjectImpl::find(val TSRMLS_CC)->object();
+    Base *object = ObjectImpl::find(val)->object();
 
     // retrieve the class entry linked to this object
     auto *entry = Z_OBJCE_P(val);
@@ -487,12 +487,12 @@ int ClassImpl::cast(zval *val, zval *retval, int type TSRMLS_DC)
         if (!std_object_handlers.cast_object) return FAILURE;
 
         // call default
-        return std_object_handlers.cast_object(val, retval, type TSRMLS_CC);
+        return std_object_handlers.cast_object(val, retval, type);
     }
     catch (Exception &exception)
     {
         // pass on the exception to php userspace
-        process(exception TSRMLS_CC);
+        process(exception);
 
         // done
         return FAILURE;
@@ -505,7 +505,7 @@ int ClassImpl::cast(zval *val, zval *retval, int type TSRMLS_DC)
  *  @param  val             The object to be cloned
  *  @return zend_object     The object to be created
  */
-zend_object *ClassImpl::cloneObject(zval *val TSRMLS_DC)
+zend_object *ClassImpl::cloneObject(zval *val)
 {
     // retrieve the class entry linked to this object
     auto *entry = Z_OBJCE_P(val);
@@ -515,7 +515,7 @@ zend_object *ClassImpl::cloneObject(zval *val TSRMLS_DC)
     ClassBase *meta = impl->_base;
 
     // retrieve the old object, which we are going to copy
-    ObjectImpl *old_object = ObjectImpl::find(val TSRMLS_CC);
+    ObjectImpl *old_object = ObjectImpl::find(val);
 
     // create a new base c++ object
     auto *cpp = meta->clone(old_object->object());
@@ -528,11 +528,11 @@ zend_object *ClassImpl::cloneObject(zval *val TSRMLS_DC)
     if (!cpp) zend_error(E_ERROR, "Unable to clone %s", entry->name);
 
     // store the object
-    auto *new_object = new ObjectImpl(entry, cpp, impl->objectHandlers(), 1 TSRMLS_CC);
+    auto *new_object = new ObjectImpl(entry, cpp, impl->objectHandlers(), 1);
 
     // clone the members (this will also call the __clone() function if the user
     // had registered that as a visible method)
-    zend_objects_clone_members(new_object->php(), old_object->php() TSRMLS_CC);
+    zend_objects_clone_members(new_object->php(), old_object->php());
 
     // was a custom clone method installed? If not we call the magic c++ __clone method
     if (!entry->clone) meta->callClone(cpp);
@@ -551,10 +551,10 @@ zend_object *ClassImpl::cloneObject(zval *val TSRMLS_DC)
  *  @param  count
  *  @return int
  */
-int ClassImpl::countElements(zval *object, zend_long *count TSRMLS_DC)
+int ClassImpl::countElements(zval *object, zend_long *count)
 {
     // does it implement the countable interface?
-    Countable *countable = dynamic_cast<Countable*>(ObjectImpl::find(object TSRMLS_CC)->object());
+    Countable *countable = dynamic_cast<Countable*>(ObjectImpl::find(object)->object());
 
     // if it does not implement the Countable interface, we rely on the default implementation
     if (countable)
@@ -571,7 +571,7 @@ int ClassImpl::countElements(zval *object, zend_long *count TSRMLS_DC)
         catch (Exception &exception)
         {
             // process the exception
-            process(exception TSRMLS_CC);
+            process(exception);
 
             // unreachable
             return FAILURE;
@@ -583,7 +583,7 @@ int ClassImpl::countElements(zval *object, zend_long *count TSRMLS_DC)
         if (!std_object_handlers.count_elements) return FAILURE;
 
         // call default
-        return std_object_handlers.count_elements(object, count TSRMLS_CC);
+        return std_object_handlers.count_elements(object, count);
     }
 }
 
@@ -600,7 +600,7 @@ int ClassImpl::countElements(zval *object, zend_long *count TSRMLS_DC)
  *  @param  tsrm_ls
  *  @return zval
  */
-zval *ClassImpl::readDimension(zval *object, zval *offset, int type, zval *rv TSRMLS_DC)
+zval *ClassImpl::readDimension(zval *object, zval *offset, int type, zval *rv)
 {
     // what to do with the type?
     //
@@ -621,7 +621,7 @@ zval *ClassImpl::readDimension(zval *object, zval *offset, int type, zval *rv TS
 
 
     // does it implement the arrayaccess interface?
-    ArrayAccess *arrayaccess = dynamic_cast<ArrayAccess*>(ObjectImpl::find(object TSRMLS_CC)->object());
+    ArrayAccess *arrayaccess = dynamic_cast<ArrayAccess*>(ObjectImpl::find(object)->object());
 
     // if it does not implement the ArrayAccess interface, we rely on the default implementation
     if (arrayaccess)
@@ -635,7 +635,7 @@ zval *ClassImpl::readDimension(zval *object, zval *offset, int type, zval *rv TS
         catch (Exception &exception)
         {
             // process the exception (send it to user space)
-            process(exception TSRMLS_CC);
+            process(exception);
 
             // unreachable
             return Value(nullptr).detach(false);
@@ -647,7 +647,7 @@ zval *ClassImpl::readDimension(zval *object, zval *offset, int type, zval *rv TS
         if (!std_object_handlers.read_dimension) return nullptr;
 
         // call default
-        return std_object_handlers.read_dimension(object, offset, type, rv TSRMLS_CC);
+        return std_object_handlers.read_dimension(object, offset, type, rv);
     }
 }
 
@@ -663,10 +663,10 @@ zval *ClassImpl::readDimension(zval *object, zval *offset, int type, zval *rv TS
  *  @param  tsrm_ls
  *  @return zval
  */
-void ClassImpl::writeDimension(zval *object, zval *offset, zval *value TSRMLS_DC)
+void ClassImpl::writeDimension(zval *object, zval *offset, zval *value)
 {
     // does it implement the arrayaccess interface?
-    ArrayAccess *arrayaccess = dynamic_cast<ArrayAccess*>(ObjectImpl::find(object TSRMLS_CC)->object());
+    ArrayAccess *arrayaccess = dynamic_cast<ArrayAccess*>(ObjectImpl::find(object)->object());
 
     // if it does not implement the ArrayAccess interface, we rely on the default implementation
     if (arrayaccess)
@@ -680,7 +680,7 @@ void ClassImpl::writeDimension(zval *object, zval *offset, zval *value TSRMLS_DC
         catch (Exception &exception)
         {
             // process the exception (send it to user space
-            process(exception TSRMLS_CC);
+            process(exception);
         }
     }
     else
@@ -689,7 +689,7 @@ void ClassImpl::writeDimension(zval *object, zval *offset, zval *value TSRMLS_DC
         if (!std_object_handlers.write_dimension) return;
 
         // call the default
-        std_object_handlers.write_dimension(object, offset, value TSRMLS_CC);
+        std_object_handlers.write_dimension(object, offset, value);
     }
 }
 
@@ -705,10 +705,10 @@ void ClassImpl::writeDimension(zval *object, zval *offset, zval *value TSRMLS_DC
  *  @param  tsrm_ls
  *  @return bool
  */
-int ClassImpl::hasDimension(zval *object, zval *member, int check_empty TSRMLS_DC)
+int ClassImpl::hasDimension(zval *object, zval *member, int check_empty)
 {
     // does it implement the arrayaccess interface?
-    ArrayAccess *arrayaccess = dynamic_cast<ArrayAccess*>(ObjectImpl::find(object TSRMLS_CC)->object());
+    ArrayAccess *arrayaccess = dynamic_cast<ArrayAccess*>(ObjectImpl::find(object)->object());
 
     // if it does not implement the ArrayAccess interface, we rely on the default implementation
     if (arrayaccess)
@@ -729,7 +729,7 @@ int ClassImpl::hasDimension(zval *object, zval *member, int check_empty TSRMLS_D
         catch (Exception &exception)
         {
             // process the exception (send it to user space)
-            process(exception TSRMLS_CC);
+            process(exception);
 
             // unreachable
             return false;
@@ -741,7 +741,7 @@ int ClassImpl::hasDimension(zval *object, zval *member, int check_empty TSRMLS_D
         if (!std_object_handlers.has_dimension) return 0;
 
         // call default
-        return std_object_handlers.has_dimension(object, member, check_empty TSRMLS_CC);
+        return std_object_handlers.has_dimension(object, member, check_empty);
     }
 }
 
@@ -755,10 +755,10 @@ int ClassImpl::hasDimension(zval *object, zval *member, int check_empty TSRMLS_D
  *  @param  member          The member to remove
  *  @param  tsrm_ls
  */
-void ClassImpl::unsetDimension(zval *object, zval *member TSRMLS_DC)
+void ClassImpl::unsetDimension(zval *object, zval *member)
 {
     // does it implement the arrayaccess interface?
-    ArrayAccess *arrayaccess = dynamic_cast<ArrayAccess*>(ObjectImpl::find(object TSRMLS_CC)->object());
+    ArrayAccess *arrayaccess = dynamic_cast<ArrayAccess*>(ObjectImpl::find(object)->object());
 
     // if it does not implement the ArrayAccess interface, we rely on the default implementation
     if (arrayaccess)
@@ -772,7 +772,7 @@ void ClassImpl::unsetDimension(zval *object, zval *member TSRMLS_DC)
         catch (Exception &exception)
         {
             // process the exception (send it to user space)
-            process(exception TSRMLS_CC);
+            process(exception);
         }
     }
     else
@@ -781,7 +781,7 @@ void ClassImpl::unsetDimension(zval *object, zval *member TSRMLS_DC)
         if (!std_object_handlers.unset_dimension) return;
 
         // call the default
-        std_object_handlers.unset_dimension(object, member TSRMLS_CC);
+        std_object_handlers.unset_dimension(object, member);
     }
 }
 
@@ -840,7 +840,7 @@ zval *ClassImpl::toZval(Value &&value, int type, zval *rv)
  *  @param  tsrm_ls
  *  @return val
  */
-zval *ClassImpl::readProperty(zval *object, zval *name, int type, void **cache_slot, zval *rv TSRMLS_DC)
+zval *ClassImpl::readProperty(zval *object, zval *name, int type, void **cache_slot, zval *rv)
 {
     // what to do with the type?
     //
@@ -860,7 +860,7 @@ zval *ClassImpl::readProperty(zval *object, zval *name, int type, void **cache_s
     // that is in most cases simply impossible.
 
     // retrieve the object and class
-    Base *base = ObjectImpl::find(object TSRMLS_CC)->object();
+    Base *base = ObjectImpl::find(object)->object();
 
     // retrieve the class entry linked to this object
     auto *entry = Z_OBJCE_P(object);
@@ -897,13 +897,13 @@ zval *ClassImpl::readProperty(zval *object, zval *name, int type, void **cache_s
         if (!std_object_handlers.read_property) return nullptr;
 
         // call default
-        return std_object_handlers.read_property(object, name, type, cache_slot, rv TSRMLS_CC);
+        return std_object_handlers.read_property(object, name, type, cache_slot, rv);
     }
     catch (Exception &exception)
     {
         // user threw an exception in its magic method
         // implementation, send it to user space
-        process(exception TSRMLS_CC);
+        process(exception);
 
         // unreachable
         return Value(nullptr).detach(false);
@@ -923,10 +923,10 @@ zval *ClassImpl::readProperty(zval *object, zval *name, int type, void **cache_s
  *  @param  tsrm_ls
  *  @return zval
  */
-void ClassImpl::writeProperty(zval *object, zval *name, zval *value, void **cache_slot TSRMLS_DC)
+void ClassImpl::writeProperty(zval *object, zval *name, zval *value, void **cache_slot)
 {
     // retrieve the object and class
-    Base *base = ObjectImpl::find(object TSRMLS_CC)->object();
+    Base *base = ObjectImpl::find(object)->object();
 
     // retrieve the class entry linked to this object
     auto *entry = Z_OBJCE_P(object);
@@ -966,13 +966,13 @@ void ClassImpl::writeProperty(zval *object, zval *name, zval *value, void **cach
         if (!std_object_handlers.write_property) return;
 
         // call the default
-        std_object_handlers.write_property(object, name, value, cache_slot TSRMLS_CC);
+        std_object_handlers.write_property(object, name, value, cache_slot);
     }
     catch (Exception &exception)
     {
         // user threw an exception in its magic method
         // implementation, send it to user space
-        process(exception TSRMLS_CC);
+        process(exception);
     }
 }
 
@@ -996,14 +996,14 @@ void ClassImpl::writeProperty(zval *object, zval *name, zval *value, void **cach
  *  @param  tsrm_ls
  *  @return bool
  */
-int ClassImpl::hasProperty(zval *object, zval *name, int has_set_exists, void **cache_slot TSRMLS_DC)
+int ClassImpl::hasProperty(zval *object, zval *name, int has_set_exists, void **cache_slot)
 {
     // the default implementation throws an exception, if we catch that
     // we know for sure that the user has not overridden the __isset method
     try
     {
         // get the cpp object
-        Base *base = ObjectImpl::find(object TSRMLS_CC)->object();
+        Base *base = ObjectImpl::find(object)->object();
 
         // retrieve the class entry linked to this object
         auto *entry = Z_OBJCE_P(object);
@@ -1039,13 +1039,13 @@ int ClassImpl::hasProperty(zval *object, zval *name, int has_set_exists, void **
         if (!std_object_handlers.has_property) return 0;
 
         // call default
-        return std_object_handlers.has_property(object, name, has_set_exists, cache_slot TSRMLS_CC);
+        return std_object_handlers.has_property(object, name, has_set_exists, cache_slot);
     }
     catch (Exception &exception)
     {
         // user threw an exception in its magic method
         // implementation, send it to user space
-        process(exception TSRMLS_CC);
+        process(exception);
 
         // unreachable
         return false;
@@ -1062,7 +1062,7 @@ int ClassImpl::hasProperty(zval *object, zval *name, int has_set_exists, void **
  *  @param  cache_slot      The cache slot used
  *  @param  tsrm_ls
  */
-void ClassImpl::unsetProperty(zval *object, zval *member, void **cache_slot TSRMLS_DC)
+void ClassImpl::unsetProperty(zval *object, zval *member, void **cache_slot)
 {
     // the default implementation throws an exception, if we catch that
     // we know for sure that the user has not overridden the __unset method
@@ -1081,7 +1081,7 @@ void ClassImpl::unsetProperty(zval *object, zval *member, void **cache_slot TSRM
         auto iter = impl->_properties.find(name);
 
         // if the property does not exist, we forward to the __unset
-        if (iter == impl->_properties.end()) impl->_base->callUnset(ObjectImpl::find(object TSRMLS_CC)->object(), member);
+        if (iter == impl->_properties.end()) impl->_base->callUnset(ObjectImpl::find(object)->object(), member);
 
         // callback properties cannot be unset
         zend_error(E_ERROR, "Property %s can not be unset", (const char *)name);
@@ -1092,13 +1092,13 @@ void ClassImpl::unsetProperty(zval *object, zval *member, void **cache_slot TSRM
         if (!std_object_handlers.unset_property) return;
 
         // call the default
-        std_object_handlers.unset_property(object, member, cache_slot TSRMLS_CC);
+        std_object_handlers.unset_property(object, member, cache_slot);
     }
     catch (Exception &exception)
     {
         // user threw an exception in its magic method
         // implementation, send it to user space
-        process(exception TSRMLS_CC);
+        process(exception);
     }
 }
 
@@ -1108,7 +1108,7 @@ void ClassImpl::unsetProperty(zval *object, zval *member, void **cache_slot TSRM
  *  @param  object
  *  @param  tsrm_ls
  */
-void ClassImpl::destructObject(zend_object *object TSRMLS_DC)
+void ClassImpl::destructObject(zend_object *object)
 {
     // find object
     ObjectImpl *obj = ObjectImpl::find(object);
@@ -1125,13 +1125,13 @@ void ClassImpl::destructObject(zend_object *object TSRMLS_DC)
     catch (const NotImplemented &exception)
     {
         // fallback on the default destructor call
-        zend_objects_destroy_object(object TSRMLS_CC);
+        zend_objects_destroy_object(object);
     }
     catch (Exception &exception)
     {
         // a regular Php::Exception was thrown by the extension, pass it on
         // to PHP user space
-        process(exception TSRMLS_CC);
+        process(exception);
     }
 }
 
@@ -1140,13 +1140,13 @@ void ClassImpl::destructObject(zend_object *object TSRMLS_DC)
  *  @param  object      The object to be deallocated
  *  @param  tsrm_ls
  */
-void ClassImpl::freeObject(zend_object *object TSRMLS_DC)
+void ClassImpl::freeObject(zend_object *object)
 {
     // allocate memory for the object
     ObjectImpl *obj = ObjectImpl::find(object);
 
     // no longer need it
-    obj->destruct(TSRMLS_C);
+    obj->destruct();
 }
 
 /**
@@ -1156,7 +1156,7 @@ void ClassImpl::freeObject(zend_object *object TSRMLS_DC)
  *  @param  tsrm_ls
  *  @return zend_object_value       The newly created object
  */
-zend_object *ClassImpl::createObject(zend_class_entry *entry TSRMLS_DC)
+zend_object *ClassImpl::createObject(zend_class_entry *entry)
 {
     // we need the C++ class meta-information object
     ClassImpl *impl = self(entry);
@@ -1170,7 +1170,7 @@ zend_object *ClassImpl::createObject(zend_class_entry *entry TSRMLS_DC)
     if (!cpp) zend_error(E_ERROR, "Unable to instantiate %s", entry->name);
 
     // create the object in the zend engine
-    auto *object = new ObjectImpl(entry, cpp, impl->objectHandlers(), 1 TSRMLS_CC);
+    auto *object = new ObjectImpl(entry, cpp, impl->objectHandlers(), 1);
 
     // return the php object stored in the implementation
     return object->php();
@@ -1184,7 +1184,7 @@ zend_object *ClassImpl::createObject(zend_class_entry *entry TSRMLS_DC)
  *  @param  tsrm_ls
  *  @return zend_object_iterator*   Pointer to the iterator
  */
-zend_object_iterator *ClassImpl::getIterator(zend_class_entry *entry, zval *object, int by_ref TSRMLS_DC)
+zend_object_iterator *ClassImpl::getIterator(zend_class_entry *entry, zval *object, int by_ref)
 {
     // by-ref is not possible (copied from SPL), this function is called directly
     // from the Zend engine, so we can use zend_error() to longjmp() back to the
@@ -1192,7 +1192,7 @@ zend_object_iterator *ClassImpl::getIterator(zend_class_entry *entry, zval *obje
     if (by_ref) zend_error(E_ERROR, "Foreach by ref is not possible");
 
     // retrieve the traversable object
-    Traversable *traversable = dynamic_cast<Traversable*>(ObjectImpl::find(object TSRMLS_CC)->object());
+    Traversable *traversable = dynamic_cast<Traversable*>(ObjectImpl::find(object)->object());
     
     // use might throw an exception in the getIterator() function
     try
@@ -1214,7 +1214,7 @@ zend_object_iterator *ClassImpl::getIterator(zend_class_entry *entry, zval *obje
     catch (Exception &exception)
     {
         // user threw an exception in its method, send it to user space
-        process(exception TSRMLS_CC);
+        process(exception);
 
         // unreachable
         return nullptr;
@@ -1230,10 +1230,10 @@ zend_object_iterator *ClassImpl::getIterator(zend_class_entry *entry, zval *obje
  *  @param  tsrm_ls
  *  @return int
  */
-int ClassImpl::serialize(zval *object, unsigned char **buffer, size_t *buf_len, zend_serialize_data *data TSRMLS_DC)
+int ClassImpl::serialize(zval *object, unsigned char **buffer, size_t *buf_len, zend_serialize_data *data)
 {
     // get the serializable object
-    Serializable *serializable = dynamic_cast<Serializable*>(ObjectImpl::find(object TSRMLS_CC)->object());
+    Serializable *serializable = dynamic_cast<Serializable*>(ObjectImpl::find(object)->object());
 
     // user may throw an exception in the serialize() function
     try
@@ -1251,7 +1251,7 @@ int ClassImpl::serialize(zval *object, unsigned char **buffer, size_t *buf_len, 
     {
         // user threw an exception in its method
         // implementation, send it to user space
-        process(exception TSRMLS_CC);
+        process(exception);
 
         // unreachable
         return FAILURE;
@@ -1270,13 +1270,13 @@ int ClassImpl::serialize(zval *object, unsigned char **buffer, size_t *buf_len, 
  *  @param  tsrm_ls
  *  @return int
  */
-int ClassImpl::unserialize(zval *object, zend_class_entry *entry, const unsigned char *buffer, size_t buf_len, zend_unserialize_data *data TSRMLS_DC)
+int ClassImpl::unserialize(zval *object, zend_class_entry *entry, const unsigned char *buffer, size_t buf_len, zend_unserialize_data *data)
 {
     // create the PHP object
     object_init_ex(object, entry);
 
     // turn this into a serializale
-    Serializable *serializable = dynamic_cast<Serializable*>(ObjectImpl::find(object TSRMLS_CC)->object());
+    Serializable *serializable = dynamic_cast<Serializable*>(ObjectImpl::find(object)->object());
 
     // user may throw an exception in the serialize() function
     try
@@ -1288,8 +1288,8 @@ int ClassImpl::unserialize(zval *object, zend_class_entry *entry, const unsigned
     {
         // user threw an exception in its method
         // implementation, send it to user space
-        //process(exception TSRMLS_CC);
-        php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Error while unserializing");
+        //process(exception);
+        php_error_docref(NULL, E_NOTICE, "Error while unserializing");
 
         // unreachable
         return FAILURE;
@@ -1352,7 +1352,7 @@ const struct _zend_function_entry *ClassImpl::entries()
  *  @param  tsrm_ls
  *  @return zend_class_entry
  */
-zend_class_entry *ClassImpl::initialize(ClassBase *base, const std::string &prefix TSRMLS_DC)
+zend_class_entry *ClassImpl::initialize(ClassBase *base, const std::string &prefix)
 {
     // store base pointer
     _base = base;
@@ -1395,7 +1395,7 @@ zend_class_entry *ClassImpl::initialize(ClassBase *base, const std::string &pref
         if (_parent->_entry)
         {
             // register the class
-            _entry = zend_register_internal_class_ex(&entry, _parent->_entry TSRMLS_CC);
+            _entry = zend_register_internal_class_ex(&entry, _parent->_entry);
         }
         else
         {
@@ -1403,20 +1403,20 @@ zend_class_entry *ClassImpl::initialize(ClassBase *base, const std::string &pref
             std::cerr << "Derived class " << name() << " is initialized before base class " << _parent->name() << ": base class is ignored" << std::endl;
 
             // register the class, but without the base class
-            _entry = zend_register_internal_class(&entry TSRMLS_CC);
+            _entry = zend_register_internal_class(&entry);
         }
     }
     else
     {
         // register the class
-        _entry = zend_register_internal_class(&entry TSRMLS_CC);
+        _entry = zend_register_internal_class(&entry);
     }
 
     // register the classes
     for (auto &interface : _interfaces)
     {
         // register this interface
-        if (interface->_entry) zend_class_implements(_entry TSRMLS_CC, 1, interface->_entry);
+        if (interface->_entry) zend_class_implements(_entry, 1, interface->_entry);
 
         // otherwise report an error
         else std::cerr << "Derived class " << name() << " is initialized before base class " << interface->name() << ": interface is ignored" << std::endl;
@@ -1442,7 +1442,7 @@ zend_class_entry *ClassImpl::initialize(ClassBase *base, const std::string &pref
     _entry->ce_flags = (int)_type;
 
     // declare all member variables
-    for (auto &member : _members) member->initialize(_entry TSRMLS_CC);
+    for (auto &member : _members) member->initialize(_entry);
 
     // done
     return _entry;

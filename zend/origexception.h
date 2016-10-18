@@ -8,7 +8,6 @@
  *  @copyright 2013 Copernica BV
  */
 #include <TSRM.h>
-#include "exception.h"
 #include <zend_exceptions.h>
 /**
  *  Set up namespace
@@ -47,14 +46,15 @@ public:
      *  @param  exception
      */
     OrigException(const OrigException &exception) :
-        Exception("OrigException"), _handled(exception._handled)
+        Exception("OrigException"), _handled(exception._handled) {
+        //@todo TSRM usage
+    }
 
     /**
      *  Move constructor
      *  @param  exception
      */
-    OrigException(OrigException &&exception) :
-        Exception("OrigException"), _handled(exception._handled)
+    OrigException(OrigException &&exception) : Exception("OrigException"), _handled(exception._handled)
     {
         // set other exception to handled so that it wont do anything on destruction
         exception._handled = true;
@@ -97,13 +97,13 @@ public:
  *  @param  exception
  *  @param  tsrm_ls
  */
-inline void process(Exception &exception TSRMLS_DC)
+inline void process(Exception &exception)
 {
     // is this a native exception?
     if (exception.native())
     {
         // the exception is native, call the zend throw method
-        zend_throw_exception(zend_exception_get_default(), (char *)exception.what(), 0 TSRMLS_CC);
+        zend_throw_exception(zend_exception_get_default(), (char *)exception.what(), 0);
     }
 
     // or does it have its own report function?

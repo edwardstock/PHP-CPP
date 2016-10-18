@@ -58,7 +58,7 @@ public:
      *  @param  that
      *  @param  tsrm_ls
      */
-    HashIterator(const HashIterator &that TSRMLS_DC) :
+    HashIterator(const HashIterator &that) :
         _table(that._table), _position(that._position), _is_array(that._is_array)
     {
         // read current position

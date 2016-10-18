@@ -39,7 +39,7 @@ public:
      *  Constructor
      *  @param  options
      */
-    CompilerOptions(uint32_t options TSRMLS_DC)
+    CompilerOptions(uint32_t options)
     {
         // remember the old compiler options before we set temporary compile options
         _original = CG(compiler_options);

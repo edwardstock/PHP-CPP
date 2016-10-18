@@ -56,7 +56,7 @@ public:
      *  Constructor
      *  @param  no_extensions
      */
-    ExecuteState(int no_extensions TSRMLS_DC)
+    ExecuteState(int no_extensions)
     {
         // store all the original stuff
         _active_op_array = CG(active_op_array);
