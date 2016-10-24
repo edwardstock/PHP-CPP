@@ -22,6 +22,7 @@
  *  Dependencies
  */
 #include "zval.h"
+#include "thread.h"
 
 /**
  *  Set up namespace
@@ -57,8 +58,8 @@ public:
     Value(int64_t value);
     Value(bool value);
     Value(char value);
-    Value(const std::string &value);
-    Value(const char *value, int size = -1);
+    Value(const std::string &value, bool persistent = false);
+    Value(const char *value, int size = -1, bool persistent = false);
     Value(double value);
     Value(const IniValue &value);
 

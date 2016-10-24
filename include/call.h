@@ -62,7 +62,7 @@ Value call(const char *name, Params&&... params)
 {
     // the name can be turned into a Php::Value object, which implements
     // the operator () method to call it
-    Value function(name);
+    Value function(name, -1, true);
 
     // invoke the operator ()
     return function(std::forward<Params>(params)...);

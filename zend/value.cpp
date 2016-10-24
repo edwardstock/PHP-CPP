@@ -93,6 +93,12 @@ Value::Value(bool value)
  */
 Value::Value(char value)
 {
+    if(Thread::isPrepared()) {
+        //create persistent string for multithreaded allocation support
+        ZVAL_PSTRINGL(_val, &value, 1);
+        return;
+    }
+
     // create a string zval
     ZVAL_STRINGL(_val, &value, 1);
 }
@@ -100,25 +106,75 @@ Value::Value(char value)
 /**
  *  Constructor based on string value
  *  @param  value
+ *  @param persistent
  */
-Value::Value(const std::string &value)
+Value::Value(const std::string &value, bool persistent)
 {
-    // create a string zval
-    ZVAL_STRINGL(_val, value.c_str(), value.size());
+    const char* s = value.c_str();
+    // is there a value?
+    if (s)
+    {
+        // create a string zval
+        if(persistent || Thread::isPrepared())
+        {
+            ZVAL_PSTRINGL(
+                _val,
+                s,
+                ::strlen(s)
+            );
+        }
+        else
+        {
+            ZVAL_STRINGL(
+                _val,
+                s,
+                ::strlen(s)
+            );
+        }
+    }
+    else
+    {
+        // store null
+        ZVAL_NULL(_val);
+    }
 }
 
 /**
- *  Constructor based on a byte array
- *  @param  value
- *  @param  size
+ * Constructor based on a byte array
+ * Persistence can help u with multithreaded nulled (freed) pointers,
+ * because php emalloc allocates memory only once per request,
+ * on shutdown all destructors will called, zval's freed, nether malloc
+ * @see emalloc
+ * @see malloc
+ * @param value
+ * @param size
+ * @param persistent
+ * @return
  */
-Value::Value(const char *value, int size)
+Value::Value(const char *value, int size, bool persistent)
 {
     // is there a value?
     if (value)
     {
         // create a string zval
-        ZVAL_STRINGL(_val, value, size < 0 ? ::strlen(value) : size);
+        if(persistent || Thread::isPrepared())
+        {
+            // @TODO Leaks are possible? when free called after malloc ?
+            ZVAL_PSTRINGL(
+                _val,
+                value,
+                size < 0 ? ::strlen(value) : size
+            );
+        }
+        else
+        {
+            ZVAL_STRINGL(
+                _val,
+                value,
+                size < 0 ? ::strlen(value) : size
+            );
+        }
+
     }
     else
     {
@@ -744,11 +800,30 @@ static Value do_exec(const zval *object, zval *method, int argc, zval *argv)
     // the current exception
     zend_object *oldException = EG(exception);
 
+	if(!EG(active)) {
+		std::cerr << "executor globals is not active already" << std::endl;
+	}
+
     // call the function
-    // we're casting the const away here, object is only const so we can call this method
-    // from const methods after all..
-    if (call_user_function_ex(CG(function_table), (zval*) object, method, &retval, argc, argv, 1, nullptr) != SUCCESS)
+	// we're casting the const away here, object is only const so we can call this method
+	// from const methods after all..
+	HashTable *funcs = CG(function_table);
+
+    if (call_user_function_ex(
+        funcs, // functions table
+        (zval*) object, // object method called?
+        method,    // method name or \Closure
+        &retval,   // return value
+        argc,      // arguments count
+        argv,      // arguments values
+        1,         // no separation
+        nullptr    // symbol table
+    ) != SUCCESS)
     {
+        if(oldException != EG(exception) && EG(exception)) {
+            throw OrigException(EG(exception));
+        }
+
         // throw an exception, the function does not exist
         throw Exception("Invalid call to "+Value(method).stringValue());
 
@@ -913,7 +988,7 @@ Value Value::exec(const char *name, int argc, Value *argv) const
 Value Value::exec(const char *name, int argc, Value *argv)
 {
     // wrap the name in a Php::Value object to get a zval
-    Value method(name);
+    Value method(name, -1, true);
 
     // array of zvals to execute
     zval params[argc];
@@ -1291,6 +1366,8 @@ std::string Value::stringValue() const
         case Type::Numeric:     return std::to_string(numericValue());
         case Type::Float:       return std::to_string(floatValue());
         case Type::String:      return { Z_STRVAL_P(_val), Z_STRLEN_P(_val) };
+        case Type::Object:      return "object";
+        case Type::Callable:    return "object(\\Closure)";
         default:                break;
     }
 
